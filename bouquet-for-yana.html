@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Букет для Яны</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Manrope:wght@400;500;700&family=Unbounded:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: two columns on desktop (text and message on the left, the living bouquet on the right), one column on a phone. Single dark look by choice: glowing characters on a deep plum night. */
+:root {
+  --bg: #0d0a12;
+  --glow: #2b1633;
+  --ink: #f6ebf1;
+  --muted: #a692a8;
+  --rose: #ff8ac8;
+  --sun: #ffd84a;
+  --leaf: #a6ea3a;
+  --card: #171120;
+  --line: #2f2340;
+  --font-display: 'Unbounded', 'Arial Black', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  background-image: radial-gradient(60rem 40rem at 72% 38%, var(--glow), transparent 70%);
+  background-repeat: no-repeat;
+  color: var(--ink);
+  font: 16px/1.55 var(--font-body);
+  padding-block: 28px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  overflow-x: hidden;
+}
+.page {
+  max-width: 1080px;
+  margin-inline: auto;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "head" "art" "panel";
+}
+.head { grid-area: head; display: grid; gap: 12px; }
+.art { grid-area: art; min-width: 0; }
+.panel { grid-area: panel; display: grid; gap: 16px; min-width: 0; }
+@media (min-width: 860px) {
+  .page {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 580px);
+    grid-template-rows: auto 1fr;
+    column-gap: 56px;
+    row-gap: 28px;
+    min-height: calc(100vh - 80px);
+    align-content: center;
+  }
+  .page { grid-template-areas: "head art" "panel art"; }
+  .head { align-self: end; }
+  .panel { align-self: start; }
+}
+
+.kicker {
+  font: 500 0.78rem/1.2 var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+h1 {
+  font: 600 clamp(2rem, 6.4vw, 3.5rem)/1.08 var(--font-display);
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-wrap: balance;
+}
+h1 .name { color: var(--rose); }
+.lead { margin: 0; max-width: 34rem; color: var(--muted); font-size: 1.02rem; }
+
+.stage {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  margin-inline: auto;
+  aspect-ratio: 50.4 / 54;
+}
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#glow { filter: blur(7px) saturate(1.4); opacity: 0.7; pointer-events: none; }
+#bouquet { touch-action: pan-y; cursor: default; }
+.cap {
+  margin: 6px 0 0;
+  text-align: center;
+  font: 400 0.8rem/1.3 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: lowercase;
+  color: var(--muted);
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px 20px 20px;
+  display: grid;
+  gap: 10px;
+  min-height: 9.5rem;
+  align-content: start;
+}
+.card .label {
+  margin: 0;
+  font: 500 0.74rem/1.2 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.card .wish {
+  margin: 0;
+  font: 500 1.2rem/1.45 var(--font-body);
+  text-wrap: pretty;
+  min-height: 3em;
+}
+.card .finale { margin: 0; color: var(--sun); font-size: 0.95rem; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+.dots { display: flex; flex-wrap: wrap; gap: 10px; }
+.dot {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 2px solid var(--c, var(--rose));
+  background: transparent;
+  cursor: pointer; padding: 0;
+  transition: transform 0.15s ease, background-color 0.2s ease;
+}
+.dot[data-open="1"] { background: var(--c, var(--rose)); }
+.dot[aria-pressed="true"] { transform: scale(1.22); box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--c, var(--rose)); }
+.btn {
+  font: 700 0.88rem/1 var(--font-body);
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 12px 18px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+.btn:hover { border-color: var(--rose); color: var(--rose); }
+.dot:focus-visible, .btn:focus-visible, #bouquet:focus-visible { outline: 2px solid var(--sun); outline-offset: 3px; }
+.hint { margin: 0; font-size: 0.85rem; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .dot, .btn { transition: none; } }
+</style>
+
+<body>
+<main class="page">
+  <header class="head">
+    <p class="kicker">для Яны · <span id="today">сегодня</span></p>
+    <h1><span class="name">Яна,</span> это&nbsp;тебе</h1>
+    <p class="lead">Для тебя вырос букет. Нажимай на цветы, чтобы открыть пожелания, води пальцем или курсором, и бабочка полетит следом.</p>
+  </header>
+
+  <figure class="art" style="margin:0">
+    <div class="stage">
+      <canvas id="glow" aria-hidden="true"></canvas>
+      <canvas id="bouquet" role="img" aria-label="Анимированный букет из текстовых символов. Нажимай на цветы, чтобы открыть пожелания."></canvas>
+    </div>
+    <figcaption class="cap">цветы, которые не завянут</figcaption>
+  </figure>
+
+  <section class="panel" aria-label="Пожелания">
+    <div class="card">
+      <p class="label" id="label">7 цветов, 7 пожеланий</p>
+      <p class="wish" id="wish" aria-hidden="true">Нажми на любой цветок. В каждом спрятано пожелание для тебя.</p>
+      <span class="sr" id="wishSr" role="status">Нажми на любой цветок. В каждом спрятано пожелание для тебя.</span>
+      <p class="finale" id="finale" hidden>Все семь цветов открыты. Теперь букет твой.</p>
+    </div>
+    <div class="row">
+      <div class="dots" id="dots"></div>
+      <button class="btn" id="star" type="button">Загадать желание</button>
+      <button class="btn" id="remix" type="button">Собрать заново</button>
+    </div>
+    <p class="hint">Пустой кружок: цветок ещё не открыт. Бабочка садится на тот цветок, на который нажмёшь.</p>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- Тексты: меняй под себя ----------
+  var WISHES = [
+    'Пусть этот ноябрь будет для тебя тёплым, даже если за окном холодно.',
+    'У тебя красивая улыбка. Пусть поводов для неё будет больше.',
+    'Пусть всё, что ты задумала, получается с первого раза. Ну или со второго.',
+    'Ты умеешь быть рядом так, что становится спокойнее. Это редкий талант.',
+    'Желаю тебе много хороших новостей и ни одного сломанного плана.',
+    'Пусть у тебя всегда будет время на то, что тебя радует.',
+    'Ты классная. Просто запомни это и не спорь.'
+  ];
+
+  var reduce = false;
+  try { reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+  var M = reduce ? 0.25 : 1;
+
+  // ---------- Сетка символов ----------
+  var COLS = 84, ROWS = 54, CWU = 0.6;           // 1 единица мира = высота строки
+  var WW = COLS * CWU, CX = WW / 2, AY = 37;     // AY: точка, где сходятся стебли
+  var CH = new Array(COLS * ROWS).fill('');
+  var CO = new Array(COLS * ROWS).fill('');
+
+  function put(c, r, ch, color) {
+    if (c < 0 || r < 0 || c >= COLS || r >= ROWS) return;
+    var i = r * COLS + c; CH[i] = ch; CO[i] = color;
+  }
+  function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function ease(x) { var c1 = 1.70158, c3 = c1 + 1, y = x - 1; return 1 + c3 * y * y * y + c1 * y * y; }
+  function hash(c, r) { return Math.abs(((c * 73856093) ^ (r * 19349663)) | 0) % 97; }
+  function mix(hex, t) {
+    var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+    r = Math.round(r + (255 - r) * t); g = Math.round(g + (255 - g) * t); b = Math.round(b + (255 - b) * t);
+    return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+  }
+
+  // ---------- Цветы ----------
+  var PAL = [
+    { b: '#ff8ac8', c: '#ffd23f' },
+    { b: '#fff1a6', c: '#ffbf2e' },
+    { b: '#ff4d4d', c: '#ffb26b' },
+    { b: '#ffe14d', c: '#ff9d2e' },
+    { b: '#b79cff', c: '#ffe14d' },
+    { b: '#ff9a7a', c: '#fff1a6' },
+    { b: '#8fd6ff', c: '#fff1a6' },
+    { b: '#ff9fd0', c: '#ffc58a' }
+  ];
+  var BASE = [
+    { x: -12.5, y: 12.5, R: 6.2, n: 10, a: 0.55, spin:  0.25, slot: -2.4 },
+    { x: 0,     y: 7,    R: 5.8, n: 12, a: 0.55, spin: -0.2,  slot: -0.8 },
+    { x: 12.5,  y: 13.5, R: 5.8, n: 5,  a: 0.88, spin: 0.1,   slot: 1 },
+    { x: -0.5,  y: 20.5, R: 7,   n: 6,  a: 0.9,  spin: 0,     slot: 0.2 },
+    { x: -18,   y: 24,   R: 5.6, n: 7,  a: 0.62, spin: 0.15,  slot: -3 },
+    { x: 11.5,  y: 26.5, R: 5.4, n: 14, a: 0.5,  spin: -0.3,  slot: 2.2 },
+    { x: 19.5,  y: 21.5, R: 4.6, n: 6,  a: 0.7,  spin: 0.2,   slot: 3 }
+  ];
+  var DEFAULT_LOOK = [0, 1, 2, 7, 3, 4, 3];
+  var ORDER = [1, 0, 2, 4, 6, 5, 3];              // от дальних к ближним
+  var flowers = BASE.map(function (b, i) {
+    var f = Object.assign({}, b);
+    f.pulse = 0; f.hx = CX + b.x; f.hy = b.y; f.rr = b.R; f.phase = i * 1.7;
+    return f;
+  });
+  function applyLook(i, p) {
+    var f = flowers[i], pal = PAL[p];
+    f.base = pal.b; f.light = mix(pal.b, 0.32); f.center = pal.c; f.centerLight = mix(pal.c, 0.3);
+  }
+  DEFAULT_LOOK.forEach(function (p, i) { applyLook(i, p); });
+
+  // ---------- Листья ----------
+  var LEAVES = [
+    { x: -10, y: 33,   rx: 11, ry: 5.5, rot:  0.55, ch: '/' },
+    { x: 10,  y: 33.5, rx: 11, ry: 5.5, rot: -0.55, ch: '\\' },
+    { x: -16, y: 29.5, rx: 7,  ry: 3.4, rot:  0.95, ch: '/' },
+    { x: 15,  y: 30,   rx: 7,  ry: 3.4, rot: -0.95, ch: '\\' },
+    { x: -4,  y: 30.5, rx: 6,  ry: 3,   rot:  0.9,  ch: 'x' },
+    { x: 5,   y: 31,   rx: 6,  ry: 3,   rot: -0.9,  ch: 'x' }
+  ];
+  var LEAF_A = '#8fdc2e', LEAF_B = '#c8f74e', STEM_A = '#6fd02f', STEM_B = '#a8ee48';
+
+  // ---------- Частицы ----------
+  var parts = [];
+  var SPARK = ['#ffd6ec', '#fff3a0', '#d9c8ff', '#ffffff', '#ffb3d6'];
+  var nAmb = reduce ? 12 : 36;
+  for (var k = 0; k < nAmb; k++) {
+    parts.push({ amb: true, x: Math.random() * WW, y: Math.random() * ROWS, vy: -(0.5 + Math.random() * 1.1),
+      ph: Math.random() * 6.28, ch: ['+', '*', '·', '.'][k % 4], col: SPARK[k % SPARK.length] });
+  }
+  function burst(x, y, col, n) {
+    for (var k = 0; k < n; k++) {
+      var a = Math.random() * 6.283, s = 4 + Math.random() * 9;
+      parts.push({ petal: true, x: x, y: y, vx: Math.cos(a) * s * 0.6, vy: Math.sin(a) * s - 4, g: 14,
+        life: 1.5 + Math.random() * 0.9, col: k % 3 === 0 ? '#fff3a0' : col, ch: ['•', '*', '+', 'o'][k % 4] });
+    }
+  }
+
+  // ---------- Состояние ----------
+  var canvas = document.getElementById('bouquet'), ctx = canvas.getContext('2d');
+  var gcanvas = document.getElementById('glow'), gctx = gcanvas.getContext('2d');
+  var cw = 8, chh = 8, T0 = performance.now(), last = 0, wind = 0, px = 0, pxT = 0;
+  var pw = null;                                   // указатель в координатах мира
+  var bf = { x: CX - 20, y: 10, vx: 0, vy: 0, perch: -1, until: 0, flap: 14, trail: [] };
+  var star = null;                                 // падающая звезда
+
+  function fit() {
+    var box = canvas.parentElement.getBoundingClientRect();
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var w = Math.max(200, Math.round(box.width * dpr)), h = Math.round(w * ROWS / WW);
+    canvas.width = w; canvas.height = h;
+    gcanvas.width = Math.round(w / 2); gcanvas.height = Math.round(h / 2);
+    cw = w / COLS; chh = h / ROWS;
+  }
+
+  function growOf(tt, delay, dur) { return reduce ? 1 : ease(clamp((tt - delay) / dur, 0, 1)); }
+
+  // ---------- Расчёт и отрисовка ----------
+  function update(tt, dt) {
+    for (var i = 0; i < flowers.length; i++) {
+      var f = flowers[i], g = growOf(tt, 0.5 + i * 0.18, 1.6);
+      f.g = g;
+      var lean = (AY - f.y) / 28;
+      var sx = wind * lean * 1.6 + px * 2.2 * lean;
+      f.hx = lerp(CX, CX + f.x, g) + sx;
+      f.hy = lerp(AY - 4, f.y, g) + Math.sin(tt * 1.3 + f.phase) * 0.35 * M;
+      f.pulse = Math.max(0, f.pulse - dt * 2.2);
+      f.rr = f.R * g * (1 + 0.18 * f.pulse) * (1 + 0.03 * Math.sin(tt * 2 + i) * M);
+    }
+    // бабочка
+    var btx, bty;
+    if (bf.perch >= 0 && tt < bf.until) {
+      var pf = flowers[bf.perch];
+      btx = pf.hx + pf.rr * 0.35; bty = pf.hy - pf.rr * 0.55;
+      bf.x += (btx - bf.x) * Math.min(1, dt * 7); bf.y += (bty - bf.y) * Math.min(1, dt * 7);
+      bf.vx = 0; bf.vy = 0; bf.flap = 2.2;
+    } else {
+      bf.perch = -1;
+      if (pw) { btx = pw.x; bty = pw.y - 1.5; } else { btx = CX + Math.sin(tt * 0.5) * 17; bty = 15 + Math.cos(tt * 0.7) * 9; }
+      var bax = (btx - bf.x) * 5 + Math.sin(tt * 6.3) * 14 * M, bay = (bty - bf.y) * 5 + Math.cos(tt * 5.1) * 14 * M;
+      var damp = Math.pow(0.04, dt);
+      bf.vx = (bf.vx + bax * dt) * damp; bf.vy = (bf.vy + bay * dt) * damp;
+      bf.x += bf.vx * dt; bf.y += bf.vy * dt; bf.flap = 14;
+    }
+    bf.x = clamp(bf.x, 1, WW - 1); bf.y = clamp(bf.y, 1, ROWS - 3);
+    bf.trail.push({ x: bf.x, y: bf.y }); if (bf.trail.length > 7) bf.trail.shift();
+    // звезда
+    if (star) {
+      star.x += star.vx * dt; star.y += star.vy * dt;
+      star.tr.push({ x: star.x, y: star.y }); if (star.tr.length > 14) star.tr.shift();
+      if (star.x > WW + 3 || star.y > ROWS + 2) finishStar();
+    }
+    for (var j = parts.length - 1; j >= 0; j--) {
+      var p = parts[j];
+      if (p.amb) {
+        p.y += p.vy * dt * M; p.x += Math.sin(tt * 0.8 + p.ph) * 0.4 * dt * M;
+        if (p.y < -1) { p.y = ROWS + 1; p.x = Math.random() * WW; }
+      } else {
+        p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+        if (p.life <= 0 || p.y > ROWS + 2) parts.splice(j, 1);
+      }
+    }
+  }
+
+  function wrapHalf(y) { return lerp(12.5, 3, (y - 31.5) / 13.5); }
+
+  function render(tt) {
+    CH.fill('');
+    var i, f, s, r, c;
+
+    // стебли
+    for (i = 0; i < flowers.length; i++) {
+      f = flowers[i]; if (f.g < 0.05) continue;
+      var x0 = f.hx, y0 = f.hy + f.rr * 0.5, ex = CX + f.slot * 0.6, ey = AY;
+      var mx = (x0 + ex) / 2 + wind * 1.1, my = (y0 + ey) / 2;
+      for (s = 0; s <= 1.0001; s += 1 / 90) {
+        var u = 1 - s;
+        var x = u * u * x0 + 2 * u * s * mx + s * s * ex, y = u * u * y0 + 2 * u * s * my + s * s * ey;
+        var dx = 2 * u * (mx - x0) + 2 * s * (ex - mx), dy = 2 * u * (my - y0) + 2 * s * (ey - my);
+        var ratio = dy === 0 ? 9 : dx / dy;
+        var chs = Math.abs(ratio) < 0.3 ? '|' : (ratio > 0 ? '\\' : '/');
+        r = Math.floor(y); c = Math.floor(x / CWU);
+        put(c, r, chs, r % 2 ? STEM_A : STEM_B);
+      }
+    }
+
+    // листья
+    var lg = growOf(tt, 0.1, 1.6);
+    for (i = 0; i < LEAVES.length; i++) {
+      var L = LEAVES[i];
+      var lx = lerp(CX, CX + L.x, lg) + wind * 0.5, ly = lerp(AY, L.y, lg);
+      var rot = L.rot + Math.sin(tt * 1.1 + i) * 0.05 * M + wind * 0.04;
+      var rx = L.rx * lg, ry = L.ry * lg; if (rx < 0.3) continue;
+      var co = Math.cos(rot), si = Math.sin(rot), ext = Math.max(rx, ry) + 1;
+      var r0 = Math.max(0, Math.floor(ly - ext)), r1 = Math.min(ROWS - 1, Math.ceil(ly + ext));
+      var c0 = Math.max(0, Math.floor((lx - ext) / CWU)), c1 = Math.min(COLS - 1, Math.ceil((lx + ext) / CWU));
+      for (r = r0; r <= r1; r++) for (c = c0; c <= c1; c++) {
+        var ddx = (c + 0.5) * CWU - lx, ddy = r + 0.5 - ly;
+        var qx = ddx * co + ddy * si, qy = -ddx * si + ddy * co;
+        var e = (qx / rx) * (qx / rx) + (qy / ry) * (qy / ry);
+        if (e > 1) continue;
+        var chl = L.ch;
+        if (Math.abs(qy / ry) < 0.12) chl = '=';
+        else if (e > 0.72) chl = 'x';
+        put(c, r, chl, r % 2 ? LEAF_A : LEAF_B);
+      }
+    }
+
+    // цветы
+    for (var oi = 0; oi < ORDER.length; oi++) {
+      i = ORDER[oi]; f = flowers[i]; if (f.g < 0.05) continue;
+      var R = f.rr, hx = f.hx, hy = f.hy, spin = tt * f.spin * M + f.phase;
+      var fr0 = Math.max(0, Math.floor(hy - R) - 1), fr1 = Math.min(ROWS - 1, Math.ceil(hy + R) + 1);
+      var fc0 = Math.max(0, Math.floor((hx - R) / CWU) - 1), fc1 = Math.min(COLS - 1, Math.ceil((hx + R) / CWU) + 1);
+      for (r = fr0; r <= fr1; r++) for (c = fc0; c <= fc1; c++) {
+        var fdx = (c + 0.5) * CWU - hx, fdy = r + 0.5 - hy, d = Math.sqrt(fdx * fdx + fdy * fdy);
+        if (d > R) continue;
+        var th = Math.atan2(fdy, fdx) - spin;
+        var pr = R * (f.a + (1 - f.a) * Math.abs(Math.cos(f.n * th / 2)));
+        if (d > pr) continue;
+        if (d < R * 0.27) {
+          put(c, r, d < R * 0.14 ? '@' : 'o', r % 2 ? f.center : f.centerLight);
+          continue;
+        }
+        var q = d / pr, h = hash(c, r), kk = (h + Math.floor(tt * 1.5 * M + h * 3)) % 4, cc;
+        if (q > 0.82) cc = ['·', '·', '.', '•'][kk];
+        else if (q > 0.5) cc = ['•', '•', 'o', '•'][kk];
+        else cc = ['•', 'o', '•', '*'][kk];
+        put(c, r, cc, (q < 0.8 && r % 2 === 0) ? f.light : f.base);
+      }
+    }
+
+    // обёртка (конус)
+    for (r = 32; r <= 45; r++) {
+      var half = wrapHalf(r + 0.5), shear = wind * 0.25 * (1 - (r - 32) / 14);
+      for (c = 0; c < COLS; c++) {
+        var wxx = (c + 0.5) * CWU - CX - shear, aw = Math.abs(wxx);
+        if (aw > half) continue;
+        var chw;
+        if (aw > half - 0.9) chw = wxx < 0 ? '\\' : '/';
+        else chw = ((c + r) % 3 === 0) ? '|' : '=';
+        put(c, r, chw, r % 2 ? LEAF_A : LEAF_B);
+      }
+    }
+    // хвостики стеблей
+    for (var kx = -2; kx <= 2; kx++) {
+      for (r = 45; r < ROWS - 1; r++) {
+        var sw = wind * 0.18 * (r - 44) / 8;
+        put(Math.floor((CX + kx * 0.75 + sw) / CWU), r, '|', r % 2 ? STEM_A : STEM_B);
+      }
+    }
+    // лента: полоса
+    for (r = 41; r <= 43; r++) {
+      var hb = wrapHalf(r + 0.5) + 1.2;
+      for (c = 0; c < COLS; c++) {
+        if (Math.abs((c + 0.5) * CWU - CX) > hb) continue;
+        put(c, r, r % 2 ? '=' : '#', r % 2 ? '#ffc2d4' : '#ff9db8');
+      }
+    }
+    // бант
+    var wob = Math.sin(tt * 1.6) * 0.06 * M;
+    for (var sgn = -1; sgn <= 1; sgn += 2) {
+      var bx = CX + sgn * 4.4, by = 42.2, brot = -sgn * 0.35 + wob * sgn, bco = Math.cos(brot), bsi = Math.sin(brot);
+      for (r = 38; r <= 47; r++) for (c = 0; c < COLS; c++) {
+        var bdx = (c + 0.5) * CWU - bx, bdy = r + 0.5 - by;
+        var bqx = bdx * bco + bdy * bsi, bqy = -bdx * bsi + bdy * bco;
+        var be = (bqx / 4.2) * (bqx / 4.2) + (bqy / 2.1) * (bqy / 2.1);
+        if (be > 1) continue;
+        put(c, r, be > 0.7 ? '%' : '@', be > 0.7 ? '#ff7fa6' : '#ffb0c8');
+      }
+    }
+    for (r = 40; r <= 44; r++) for (c = 0; c < COLS; c++) {
+      var kdx = (c + 0.5) * CWU - CX, kdy = r + 0.5 - 42.4;
+      if (kdx * kdx + kdy * kdy <= 1.9) put(c, r, '@', '#ffe0ea');
+    }
+    // хвосты ленты
+    for (var sg = -1; sg <= 1; sg += 2) {
+      for (s = 0; s <= 1.0001; s += 1 / 16) {
+        var tx = CX + sg * (1 + s * 3.8) + wind * 0.3 * s, ty = 43.8 + s * 6.2;
+        var tc = Math.floor(tx / CWU), tr = Math.floor(ty);
+        var tch = sg < 0 ? '/' : '\\', tcol = tr % 2 ? '#ff9db8' : '#ffc2d4';
+        put(tc, tr, tch, tcol); put(tc + (sg < 0 ? 1 : -1), tr, tch, tcol);
+      }
+    }
+
+    // искры и лепестки
+    for (i = 0; i < parts.length; i++) {
+      var p = parts[i], pc = Math.floor(p.x / CWU), prr = Math.floor(p.y), chp = p.ch;
+      if (p.amb) {
+        var tw = Math.sin(tt * 2.2 + p.ph); if (tw < -0.2) continue;
+        if (tw > 0.7) chp = '+';
+      }
+      put(pc, prr, chp, p.col);
+    }
+
+    // звезда
+    if (star) {
+      for (i = 0; i < star.tr.length; i++) {
+        var sp = star.tr[i], fr = i / star.tr.length;
+        put(Math.floor(sp.x / CWU), Math.floor(sp.y), fr > 0.75 ? '*' : (fr > 0.4 ? '+' : '·'),
+          fr > 0.75 ? '#ffffff' : (fr > 0.4 ? '#ffe9a8' : '#a592c8'));
+      }
+    }
+    // бабочка
+    for (i = 0; i < bf.trail.length - 1; i += 2) put(Math.floor(bf.trail[i].x / CWU), Math.floor(bf.trail[i].y), '·', '#6fb8e0');
+    var bph = Math.sin(tt * bf.flap), bc = Math.floor(bf.x / CWU), br = Math.floor(bf.y);
+    put(bc, br, 'Ж', '#ffffff');
+    if (bph > 0.35) { put(bc - 1, br, '{', '#8fd6ff'); put(bc + 1, br, '}', '#8fd6ff'); }
+    else if (bph > -0.35) { put(bc - 1, br, '(', '#8fd6ff'); put(bc + 1, br, ')', '#8fd6ff'); }
+  }
+
+  function paint() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = '700 ' + chh + 'px "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    var cur = '', r, c, i;
+    for (r = 0; r < ROWS; r++) for (c = 0; c < COLS; c++) {
+      i = r * COLS + c;
+      var ch = CH[i]; if (!ch) continue;
+      if (CO[i] !== cur) { cur = CO[i]; ctx.fillStyle = cur; }
+      ctx.fillText(ch, (c + 0.5) * cw, (r + 0.55) * chh);
+    }
+    gctx.clearRect(0, 0, gcanvas.width, gcanvas.height);
+    gctx.drawImage(canvas, 0, 0, gcanvas.width, gcanvas.height);
+  }
+
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (now - last < 28) return;
+    var dt = Math.min(0.06, (now - last) / 1000); last = now;
+    var tt = (now - T0) / 1000;
+    wind = (Math.sin(tt * 0.9) * 0.8 + Math.sin(tt * 0.37 + 1.3) * 0.55) * M;
+    px += (pxT - px) * 0.07;
+    update(tt, dt); render(tt); paint();
+  }
+
+  // ---------- Взаимодействие ----------
+  function worldPoint(e) {
+    var rc = canvas.getBoundingClientRect();
+    return { x: (e.clientX - rc.left) / rc.width * WW, y: (e.clientY - rc.top) / rc.height * ROWS, nx: (e.clientX - rc.left) / rc.width };
+  }
+  function hit(p) {
+    for (var k = ORDER.length - 1; k >= 0; k--) {
+      var f = flowers[ORDER[k]]; if (f.g < 0.5) continue;
+      var dx = p.x - f.hx, dy = p.y - f.hy;
+      if (dx * dx + dy * dy <= f.rr * f.rr * 1.1) return ORDER[k];
+    }
+    return -1;
+  }
+  canvas.addEventListener('pointermove', function (e) {
+    var p = worldPoint(e); pxT = (p.nx - 0.5) * 2; pw = { x: p.x, y: p.y };
+    canvas.style.cursor = hit(p) >= 0 ? 'pointer' : 'default';
+  });
+  canvas.addEventListener('pointerleave', function () { pxT = 0; pw = null; canvas.style.cursor = 'default'; });
+  canvas.addEventListener('pointerdown', function (e) {
+    var p = worldPoint(e), i = hit(p);
+    pw = { x: p.x, y: p.y };
+    if (i >= 0) { select(i); bf.perch = i; bf.until = (performance.now() - T0) / 1000 + 3.8; }
+    else burst(p.x, p.y, '#ffd6ec', 10);
+  });
+
+  var opened = {}, active = -1, timer = null;
+  var wishEl = document.getElementById('wish'), wishSr = document.getElementById('wishSr');
+  var labelEl = document.getElementById('label'), finaleEl = document.getElementById('finale');
+  var dotsEl = document.getElementById('dots');
+
+  function typeText(str) {
+    clearInterval(timer);
+    wishSr.textContent = str;
+    if (reduce) { wishEl.textContent = str; return; }
+    var n = 0; wishEl.textContent = '';
+    timer = setInterval(function () {
+      n += 1; wishEl.textContent = str.slice(0, n);
+      if (n >= str.length) clearInterval(timer);
+    }, 22);
+  }
+
+  function select(i) {
+    active = i; opened[i] = true;
+    var f = flowers[i];
+    f.pulse = 1; burst(f.hx, f.hy, f.base, 16);
+    var count = Object.keys(opened).length;
+    labelEl.textContent = 'Цветок ' + (i + 1) + ' из ' + flowers.length + ' · открыто ' + count + ' из ' + flowers.length;
+    typeText(WISHES[i]);
+    finaleEl.hidden = count < flowers.length;
+    renderDots();
+  }
+
+  function renderDots() {
+    dotsEl.innerHTML = '';
+    flowers.forEach(function (f, i) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'dot';
+      b.style.setProperty('--c', f.base);
+      b.setAttribute('aria-label', 'Цветок ' + (i + 1) + (opened[i] ? ', открыт' : ''));
+      b.setAttribute('aria-pressed', active === i ? 'true' : 'false');
+      b.dataset.open = opened[i] ? '1' : '0';
+      b.addEventListener('click', function () { select(i); });
+      dotsEl.appendChild(b);
+    });
+  }
+
+  document.getElementById('remix').addEventListener('click', function () {
+    var used = [];
+    flowers.forEach(function (f, i) {
+      var p, tries = 0;
+      do { p = Math.floor(Math.random() * PAL.length); tries++; } while (used.indexOf(p) > -1 && tries < 12 && used.length < PAL.length - 1);
+      used.push(p); if (used.length > 3) used.shift();
+      applyLook(i, p);
+      if (i !== 2 && i !== 3) { f.n = 6 + Math.floor(Math.random() * 9); f.a = 0.48 + Math.random() * 0.22; }
+    });
+    T0 = performance.now();
+    burst(CX, 20, '#ffd6ec', 18);
+    renderDots();
+  });
+
+  try {
+    document.getElementById('today').textContent = 'сегодня, ' + new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  } catch (e) {}
+
+  var WISH_END = [
+    'Желание принято. Дальше звезда справится сама.',
+    'Звезда услышала. Только никому не рассказывай, что загадала.',
+    'Загадано. Теперь остаётся подождать и немного помочь.'
+  ];
+  function finishStar() {
+    star = null;
+    burst(CX, 20, '#fff3a0', 28); burst(CX, 20, '#ff9fd0', 20);
+    active = -1; renderDots();
+    labelEl.textContent = 'Желание';
+    typeText(WISH_END[Math.floor(Math.random() * WISH_END.length)]);
+  }
+  document.getElementById('star').addEventListener('click', function () {
+    if (star) return;
+    if (reduce) { finishStar(); return; }
+    star = { x: -2, y: 1, vx: 30, vy: 13, tr: [] };
+    labelEl.textContent = 'Летит звезда';
+    typeText('Загадывай, пока она летит.');
+  });
+
+  renderDots();
+  fit();
+  window.addEventListener('resize', fit);
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(canvas.parentElement);
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
