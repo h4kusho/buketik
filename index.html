@@ -146,9 +146,25 @@ h1 .name { color: var(--rose); }
   transition: border-color 0.2s ease, color 0.2s ease;
 }
 .btn:hover { border-color: var(--rose); color: var(--rose); }
+.btn.primary {
+  justify-self: start;
+  font-size: 1.05rem;
+  padding: 16px 28px;
+  color: var(--bg);
+  border: 0;
+  background: linear-gradient(100deg, var(--rose), var(--sun));
+  box-shadow: 0 10px 30px -10px var(--rose);
+  animation: pulse 2.4s ease-out infinite;
+}
+.btn.primary:hover { color: var(--bg); filter: brightness(1.12); }
+.btn:disabled { opacity: 0.55; cursor: default; animation: none; filter: none; }
+@keyframes pulse {
+  0% { box-shadow: 0 10px 30px -10px var(--rose), 0 0 0 0 color-mix(in srgb, var(--sun) 60%, transparent); }
+  70%, 100% { box-shadow: 0 10px 30px -10px var(--rose), 0 0 0 18px color-mix(in srgb, var(--sun) 0%, transparent); }
+}
 .dot:focus-visible, .btn:focus-visible, #bouquet:focus-visible { outline: 2px solid var(--sun); outline-offset: 3px; }
 .hint { margin: 0; font-size: 0.85rem; color: var(--muted); }
-@media (prefers-reduced-motion: reduce) { .dot, .btn { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .dot, .btn { transition: none; } .btn.primary { animation: none; } }
 </style>
 
 <body>
@@ -174,9 +190,9 @@ h1 .name { color: var(--rose); }
       <span class="sr" id="wishSr" role="status">Нажми на любой цветок. В каждом спрятано пожелание для тебя.</span>
       <p class="finale" id="finale" hidden>Все семь цветов открыты. Теперь букет твой.</p>
     </div>
+    <button class="btn primary" id="star" type="button">✦ Загадать желание</button>
     <div class="row">
       <div class="dots" id="dots"></div>
-      <button class="btn" id="star" type="button">Загадать желание</button>
       <button class="btn" id="remix" type="button">Собрать заново</button>
     </div>
     <p class="hint">Пустой кружок: цветок ещё не открыт. Бабочка садится на тот цветок, на который нажмёшь.</p>
@@ -333,8 +349,14 @@ h1 .name { color: var(--rose); }
     // звезда
     if (star) {
       star.x += star.vx * dt; star.y += star.vy * dt;
-      star.tr.push({ x: star.x, y: star.y }); if (star.tr.length > 14) star.tr.shift();
-      if (star.x > WW + 3 || star.y > ROWS + 2) finishStar();
+      var tl = star.tr[star.tr.length - 1];
+      if (!tl || Math.hypot(star.x - tl.x, star.y - tl.y) > 0.35) { star.tr.push({ x: star.x, y: star.y }); if (star.tr.length > 26) star.tr.shift(); }
+      if (Math.random() < 0.9) {
+        parts.push({ petal: true, x: star.x + (Math.random() - 0.5) * 1.5, y: star.y + (Math.random() - 0.5) * 2,
+          vx: -1.5 - Math.random() * 2, vy: (Math.random() - 0.3) * 2, g: 3, life: 0.7 + Math.random() * 0.5,
+          col: ['#fff6c8', '#ffd84a', '#ffffff', '#ff9fd0'][Math.floor(Math.random() * 4)], ch: ['*', '+', '·', '.'][Math.floor(Math.random() * 4)] });
+      }
+      if (star.x > WW + 6 || star.y > ROWS + 2) finishStar();
     }
     for (var j = parts.length - 1; j >= 0; j--) {
       var p = parts[j];
@@ -482,10 +504,19 @@ h1 .name { color: var(--rose); }
     // звезда
     if (star) {
       for (i = 0; i < star.tr.length; i++) {
-        var sp = star.tr[i], fr = i / star.tr.length;
-        put(Math.floor(sp.x / CWU), Math.floor(sp.y), fr > 0.75 ? '*' : (fr > 0.4 ? '+' : '·'),
-          fr > 0.75 ? '#ffffff' : (fr > 0.4 ? '#ffe9a8' : '#a592c8'));
+        var sp = star.tr[i], fr = (i + 1) / star.tr.length;
+        var sc = Math.floor(sp.x / CWU), sr = Math.floor(sp.y);
+        var scol = fr > 0.75 ? '#fff6c8' : (fr > 0.4 ? '#ffd84a' : '#b79cff');
+        var sch = fr > 0.75 ? '*' : (fr > 0.4 ? '+' : '·');
+        put(sc, sr, sch, scol);
+        if (fr > 0.45) { put(sc, sr - 1, sch, scol); put(sc, sr + 1, sch, scol); }
+        if (fr > 0.8) { put(sc - 1, sr, '*', scol); put(sc + 1, sr, '*', scol); }
       }
+      var hc = Math.floor(star.x / CWU), hr = Math.floor(star.y);
+      var HEAD = [[-3, 0, '-'], [3, 0, '-'], [-2, 0, '+'], [2, 0, '+'], [-1, 0, '*'], [1, 0, '*'], [0, -2, '+'], [0, 2, '+'],
+                  [0, -1, '*'], [0, 1, '*'], [-1, -1, '·'], [1, -1, '·'], [-1, 1, '·'], [1, 1, '·']];
+      for (i = 0; i < HEAD.length; i++) put(hc + HEAD[i][0], hr + HEAD[i][1], HEAD[i][2], '#fff6c8');
+      put(hc, hr, '@', '#ffffff');
     }
     // бабочка
     for (i = 0; i < bf.trail.length - 1; i += 2) put(Math.floor(bf.trail[i].x / CWU), Math.floor(bf.trail[i].y), '·', '#6fb8e0');
@@ -611,6 +642,7 @@ h1 .name { color: var(--rose); }
   ];
   function finishStar() {
     star = null;
+    document.getElementById('star').disabled = false;
     burst(CX, 20, '#fff3a0', 28); burst(CX, 20, '#ff9fd0', 20);
     active = -1; renderDots();
     labelEl.textContent = 'Желание';
@@ -619,9 +651,10 @@ h1 .name { color: var(--rose); }
   document.getElementById('star').addEventListener('click', function () {
     if (star) return;
     if (reduce) { finishStar(); return; }
-    star = { x: -2, y: 1, vx: 30, vy: 13, tr: [] };
+    star = { x: -4, y: 2, vx: 8, vy: 3, tr: [] };
+    document.getElementById('star').disabled = true;
     labelEl.textContent = 'Летит звезда';
-    typeText('Загадывай, пока она летит.');
+    typeText('Загадывай, пока она летит. Времени хватит.');
   });
 
   renderDots();
